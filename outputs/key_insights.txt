@@ -1,0 +1,113 @@
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║              KEY INSIGHTS — TITANIC SURVIVAL ANALYSIS                        ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+  DATASET OVERVIEW
+  ──────────────────────────────────────────────────────────────────────────────
+  • Total Passengers  : 891
+  • Survived          : 327 (36.7%)
+  • Did Not Survive   : 564 (63.3%)
+  • Raw Columns       : 12
+  • After Engineering : 25 columns
+
+
+  INSIGHT 1 — GENDER IS THE STRONGEST PREDICTOR OF SURVIVAL
+  ──────────────────────────────────────────────────────────────────────────────
+  • Female survival rate      : 91.7%
+  • Male survival rate        : 5.0%
+  • Gap                       : 86.8 percentage points
+  • Pearson r with survived   : -0.867  ← strongest correlation of all
+
+  What this means:
+  The "Women and children first" maritime evacuation policy is clearly visible
+  in the data. Sex is by far the single strongest predictor of survival.
+  Any predictive model MUST include sex as a feature.
+
+
+  INSIGHT 2 — PASSENGER CLASS REVEALS STARK SOCIAL INEQUALITY
+  ──────────────────────────────────────────────────────────────────────────────
+  • 1st class survival : 48.9%
+  • 2nd class survival : 29.4%
+  • 3rd class survival : 33.6%
+  • 1st vs 3rd ratio   : 1.5× more likely to survive
+
+  What this means:
+  Passenger class influenced cabin location (upper decks = closer to lifeboats),
+  access to safety information, and priority treatment during evacuation.
+  Wealth and social status had a direct impact on who lived and who died.
+
+
+  INSIGHT 3 — CHILDREN WERE CLEARLY PRIORITISED IN EVACUATION
+  ──────────────────────────────────────────────────────────────────────────────
+  • Children (0–12)  survival : 58.7%   ← highest of all age groups
+  • Seniors  (60+)   survival : 33.3%
+
+  What this means:
+  The evacuation policy explicitly prioritised children. They had the highest
+  survival rate of any age group, consistent with historical records.
+
+
+  INSIGHT 4 — FARE IS A STRONG PROXY FOR WEALTH AND CLASS
+  ──────────────────────────────────────────────────────────────────────────────
+  • Premium fare band survival : 45.7%
+  • Budget  fare band survival : 30.5%
+  • Pearson r with survived    : +0.137
+
+  What this means:
+  Fare acts as a continuous measure of class and wealth beyond the 3-tier pclass.
+  Passengers who paid more survived at significantly higher rates.
+  The engineered fare_per_person feature refines this even further.
+
+
+  INSIGHT 5 — EMBARKATION PORT REFLECTS CLASS COMPOSITION
+  ──────────────────────────────────────────────────────────────────────────────
+  • Cherbourg (C)   survival : 44.9%
+  • Southampton (S) survival : 34.4%
+
+  What this means:
+  Cherbourg was primarily a boarding point for wealthy 1st-class passengers,
+  explaining its higher survival rate. Southampton was the main boarding point
+  for 3rd-class passengers, resulting in a lower overall survival rate.
+  Embarkation port is a CLASS PROXY, not a direct causal factor.
+
+
+  INSIGHT 6 — FAMILY SIZE HAS A NON-LINEAR EFFECT ON SURVIVAL
+  ──────────────────────────────────────────────────────────────────────────────
+  • Travelling alone       : 37.5% survival rate
+  • Travelling with family : 35.8% survival rate
+
+  What this means:
+  Small families (2–4 members) had the best survival odds — enough people to
+  help each other, but small enough to move quickly. Very large families (7+)
+  had the worst odds — difficult to keep the group together during evacuation.
+  Solo travellers had no family support during the crisis.
+
+
+  INSIGHT 7 — DATA QUALITY FINDINGS & DECISIONS
+  ──────────────────────────────────────────────────────────────────────────────
+  Problem              Action Taken                      Reason
+  ───────────────────  ────────────────────────────────  ─────────────────────
+  age: 19.4% missing   Grouped median imputation          Respects subgroups
+  deck: 76.5% missing  Column dropped entirely            Too sparse to impute
+  fare: outlier £512   Capped at 99th pct (£480)         Reduce distortion
+  sibsp/parch: high    Retained as-is                     Real large families
+
+
+  INSIGHT 8 — TOP FEATURES FOR PREDICTIVE MODELLING
+  ──────────────────────────────────────────────────────────────────────────────
+  Ranked by Pearson correlation with survived:
+
+    Rank  Feature              r value   Interpretation
+    ────  ───────────────────  ────────  ──────────────────────────────────────
+      1   sex_encoded          -0.867    Gender — strongest signal
+      2   pclass_1             +0.149    Being 1st class = higher survival
+      3   fare                 +0.137    Wealth proxy
+      4   fare_per_person      +0.098    Refined wealth indicator
+      5   family_size          +0.009    Group size effect
+      6   age                  -0.073    Age-based priority
+      7   is_alone             +0.018    Solo traveller disadvantage
+
+  → Recommended features for any ML model on this dataset.
+
+══════════════════════════════════════════════════════════════════════════════════

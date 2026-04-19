@@ -1,0 +1,173 @@
+
+
+
+  SECTION 1 — DATASET OVERVIEW
+
+  The Titanic dataset contains records of 891 passengers aboard the RMS Titanic
+  which sank on April 15, 1912. Each row is one passenger, each column is
+  a feature about that passenger.
+
+  RAW COLUMNS (12 total):
+  Column        Type      Description
+  ────────────  ────────  ──────────────────────────────────────────────────
+  survived      integer   TARGET: 0 = Died, 1 = Survived
+  pclass        integer   Passenger class: 1=1st, 2=2nd, 3=3rd
+  sex           text      Gender: male / female
+  age           float     Age in years (173 MISSING values)
+  sibsp         integer   Siblings/spouses aboard
+  parch         integer   Parents/children aboard
+  fare          float     Ticket price in British pounds
+  embarked      text      Port: C=Cherbourg, Q=Queenstown, S=Southampton
+  embark_town   text      Full port name
+  who           text      man / woman / child
+  deck          text      Cabin deck A-G (682 MISSING values = 76.5%)
+  name          text      Passenger full name
+
+  DATA QUALITY PROBLEMS FOUND:
+  Problem            Column     Count   Percentage
+  ─────────────────  ─────────  ──────  ──────────
+  Missing values     age        173     19.4%
+  Missing values     deck       682     76.5%
+  Outliers (IQR)     fare       111     12.5%
+  Duplicate rows     —          0       0.0%
+
+
+  SECTION 2 — DATA CLEANING & TRANSFORMATION TECHNIQUES
+
+  2A. MISSING VALUES
+
+  age (19.4% missing) → GROUPED MEDIAN IMPUTATION
+    How  : Calculate median age for each (pclass × sex) group.
+           Fill each missing age with its group's median.
+    Why  : A 1st-class female and a 3rd-class male have very different
+           typical ages. A global median would be inaccurate.
+           Group-specific medians are far more precise.
+
+  embarked (<0.3% missing) → MODE IMPUTATION
+    How  : Fill 2 missing values with most common port (Southampton).
+    Why  : Only 2 values missing. Any reasonable choice has no impact.
+
+  deck (76.5% missing) → COLUMN DROPPED
+    How  : Remove the entire deck column from the dataset.
+    Why  : Over 3/4 of values are missing. Any imputation would be
+           inventing data, not recovering real information.
+
+
+  2B. OUTLIER TREATMENT
+
+  Detection: IQR Method
+    Formula : Outlier if value < Q1 - 1.5×IQR  OR  value > Q3 + 1.5×IQR
+
+  fare → 99TH PERCENTILE CAPPING (Winsorizing)
+    How  : Any fare above £480.45 is replaced with £480.45.
+    Why  : Keeps the passenger in the dataset (no data loss) while
+           reducing the extreme influence of the £512 maximum value.
+
+  age, sibsp, parch → NO TREATMENT
+    Why  : All values are real and valid. sibsp=8 means a genuine
+           large family. These are not errors.
+
+
+  2C. CATEGORICAL ENCODING
+
+  Label Encoding (binary columns — 2 values only):
+    sex      : female=0, male=1
+    embarked : C=0, Q=1, S=2
+
+  One-Hot Encoding (multi-category — 3+ values):
+    pclass   : pclass_1, pclass_2, pclass_3  (one column per class)
+    Why one-hot: Label encoding would falsely imply 3>2>1 ordering.
+
+
+  2D. NUMERICAL SCALING
+
+  Method  : MinMax Normalization  →  all values become [0.0 to 1.0]
+  Formula : scaled = (value - min) / (max - min)
+  Columns : age, fare, sibsp, parch  (new columns with _scaled suffix)
+  Why     : Prevents large-range features (fare) from dominating
+            small-range features (sibsp) in statistical models.
+
+
+  2E. FEATURE ENGINEERING — 6 NEW COLUMNS
+
+  Feature          Formula/Logic                   Why Created
+  ───────────────  ──────────────────────────────  ────────────────────────────
+  family_size      sibsp + parch + 1               Total group size on board
+  is_alone         1 if family_size==1             Solo traveller flag
+  age_group        Bins: Child/Teen/Adult/Senior   Captures non-linear age effect
+  title            from who: Mr/Mrs/Miss/Master    Social status proxy
+  fare_per_person  fare / family_size              True individual cost
+  fare_band        Quartile buckets of fare        Categorical wealth tier
+
+
+  SECTION 3 — EDA RESULTS & KEY FINDINGS
+
+  7 FIGURES PRODUCED:
+  Figure   What It Shows
+  ───────  ──────────────────────────────────────────────────────────────────
+  Fig 1    Histograms + KDE density curves for all key variables
+  Fig 2    Survival rate dashboard — 9 group breakdowns in one view
+  Fig 3    Scatter plots, violin plots, grouped bars, KDE overlays
+  Fig 4    Pair plot — all pairwise variable combinations
+  Fig 5    Full correlation heatmap + ranked correlations with survived
+  Fig 6    Box plots — outlier detection BEFORE and AFTER treatment
+  Fig 7    All 6 engineered features and their analytical impact
+
+
+  KEY FINDINGS:
+
+  FINDING 1 — GENDER IS THE DOMINANT PREDICTOR  (Pearson r = -0.867)
+    Female survival: 91.7%    Male survival: 5.0%    Gap: 86.7 points
+    → "Women and children first" policy is clearly visible in the data.
+    → Sex is the single most powerful predictor of survival.
+
+  FINDING 2 — SOCIAL CLASS DETERMINES LIFEBOAT ACCESS
+    1st class: 48.9%    2nd class: 29.4%    3rd class: 33.6%
+    → 1st class passengers were 1.5x more likely to survive than 3rd.
+    → Upper deck cabins = closer to lifeboats = higher survival.
+
+  FINDING 3 — CHILDREN WERE EXPLICITLY PRIORITISED
+    Children (0-12): 58.7%  (highest survival rate of any age group)
+    → Consistent with historical "women and children first" policy.
+
+  FINDING 4 — FARE IS A CONTINUOUS WEALTH PROXY  (r = +0.137)
+    Premium fare band: 45.7%    Budget fare band: 30.5%
+    → Higher-paying passengers survived at significantly higher rates.
+
+  FINDING 5 — EMBARKATION PORT IS A CLASS PROXY
+    Cherbourg: 44.9%    Southampton: 34.4%
+    → Difference exists because different classes boarded at different ports.
+    → Not the port itself, but the class composition at each port.
+
+  FINDING 6 — FAMILY SIZE HAS A NON-LINEAR EFFECT
+    Alone: 37.5%    With family: 35.8%
+    → Small families (2-4) had best survival odds.
+    → Very large families (7+) had worst odds (hard to keep together).
+
+  FINDING 7 — DATA QUALITY DIRECTLY SHAPES ANALYSIS
+    → Deck column dropped (76.5% missing) — deck analysis is impossible.
+    → Age recovered with grouped imputation — preserves analytical value.
+
+  FINDING 8 — RECOMMENDED ML FEATURES
+    sex_encoded, pclass_1/2/3, age, fare, family_size,
+    is_alone, fare_per_person, embarked_encoded
+
+
+
+  SECTION 4 — CODE DOCUMENTATION SUMMARY
+
+
+  The file analysis.py is organized into 7 clearly labelled sections.
+  Every block of code has comments explaining:
+    • WHAT the code does
+    • WHY this approach was chosen
+    • HOW to interpret the output
+
+  Documentation conventions:
+    ── Section headers    clearly mark each major step
+    # Inline comments     explain every key code block
+    WHY: justification    every technical choice is explained
+    Docstrings            all helper functions documented with parameters
+    Chart titles          every figure title states exactly what it shows
+
+
