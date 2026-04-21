@@ -85,7 +85,7 @@ def save_figure(fig, filename, dpi=150):
     fig.savefig(filepath, dpi=dpi, bbox_inches='tight',
                 facecolor=fig.get_facecolor())
     plt.close(fig)      # Free memory after saving
-    print(f'  ✅  Saved → outputs/{filename}')
+    print(f'    Saved → outputs/{filename}')
 
 
 
@@ -228,16 +228,16 @@ print('  ' + '-'*55)
 le = LabelEncoder()
 
 df['sex_encoded']      = le.fit_transform(df['sex'])       # female=0, male=1
-print('  ✅ sex      → Label encoded  (female=0, male=1)')
+print('   sex      → Label encoded  (female=0, male=1)')
 
 df['embarked_encoded'] = le.fit_transform(df['embarked'])  # C=0, Q=1, S=2
-print('  ✅ embarked → Label encoded  (C=0, Q=1, S=2)')
+print('   embarked → Label encoded  (C=0, Q=1, S=2)')
 
 df = pd.get_dummies(df, columns=['pclass'], prefix='pclass', drop_first=False)
 for col in ['pclass_1', 'pclass_2', 'pclass_3']:
     if col in df.columns:
         df[col] = df[col].astype(int)   # Convert True/False to 1/0
-print('  ✅ pclass   → One-hot encoded (pclass_1, pclass_2, pclass_3)')
+print('   pclass   → One-hot encoded (pclass_1, pclass_2, pclass_3)')
 
 # 2D. Numerical Scaling 
 
